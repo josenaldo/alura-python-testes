@@ -46,7 +46,7 @@ class Lance:
 class Leilao:
 
     def __init__(self, descricao, lances = None):
-        self.descricao = descricao
+        self.__descricao = descricao
 
         self.__lances = []
         if(lances):
@@ -58,7 +58,11 @@ class Leilao:
 
     @property
     def lances(self):
-        return self.__lances
+        return self.__lances[:]
+
+    @property
+    def descricao(self):
+        return self.__descricao
 
     def dar_lance(self, lance: Lance):
 
@@ -68,7 +72,11 @@ class Leilao:
             if(lance.valor <= maior_lance.valor):
                 raise ValueError("Para um lance ser aceito, ele deve ser maior que os lances anteriores")
 
-        self.lances.append(lance)
+        self.__lances.append(lance)
+
+    def dar_lances(self, lances):
+        for lance in lances:
+            self.dar_lance(lance)
 
 
 class Avaliador:
