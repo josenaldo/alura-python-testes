@@ -8,18 +8,22 @@ class Usuario:
     def __repr__(self):
         return f"Usuario(nome='{self.nome}')"
 
+    def __str__(self):
+        return self.nome
+
+    def __eq__(self, other):
+        return self.nome == other.nome
+
     @property
     def nome(self):
         return self.__nome
 
 
-
-
 class Lance:
 
     def __init__(self, usuario, valor):
-        self.usuario = usuario
-        self.valor = valor
+        self.__usuario = usuario
+        self.__valor = valor
 
     def __repr__(self):
         return f"Lance(usuario={repr(self.usuario)}, valor=R$ {self.valor:.2f})"
@@ -27,17 +31,48 @@ class Lance:
     def __str__(self):
         return f"Lance({self.usuario.nome}: R$ {self.valor:.2f})"
 
+    def __eq__(self, other):
+        return self.valor == other.valor and self.usuario == other.usuario
+
+    @property
+    def usuario(self):
+        return self.__usuario
+
+    @property
+    def valor(self):
+        return self.__valor
+
+
 class Leilao:
 
-    def __init__(self, descricao):
+    def __init__(self, descricao, lances = None):
         self.descricao = descricao
+
         self.__lances = []
+        if(lances):
+            for lance in lances:
+                self.dar_lance(lance)
+
+    def __len__(self):
+        return len(self.lances)
 
     @property
     def lances(self):
         return self.__lances
 
+    def dar_lance(self, lance: Lance):
+
+        if len(self.lances) > 0:
+            maior_lance = max(self.lances, key=attrgetter('valor'))
+
+            if(lance.valor <= maior_lance.valor):
+                raise ValueError("Para um lance ser aceito, ele deve ser maior que os lances anteriores")
+
+        self.lances.append(lance)
+
+
 class Avaliador:
+
     def __init__(self, leilao: Leilao):
         self.__leilao = leilao
 
