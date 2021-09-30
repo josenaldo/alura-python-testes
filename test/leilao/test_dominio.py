@@ -9,14 +9,17 @@ class TestAvaliador(TestCase):
         gui = Usuario('Gui')
         yuri = Usuario('Yuri')
 
-        lances_do_yuri = [Lance(yuri, 45.0), Lance(yuri, 50.0), Lance(yuri, 250.0)]
-        lances_do_gui = [Lance(gui, 48.0), Lance(gui, 60.0), Lance(gui, 300.0)]
+        lances = [
+            Lance(yuri, 45.0),
+            Lance(gui, 48.0),
+            Lance(yuri, 50.0),
+            Lance(gui, 60.0),
+            Lance(yuri, 250.0),
+            Lance(gui, 300.0)
+        ]
 
         leilao = Leilao("Celular")
-
-        leilao.lances.extend(lances_do_gui)
-        leilao.lances.extend(lances_do_yuri)
-
+        leilao.lances.extend(lances)
         return Avaliador(leilao)
 
     def test_menor_lance(self):
