@@ -1,87 +1,134 @@
-from unittest import TestCase
-
+import pytest
 from src.leilao.dominio import Usuario, Lance, Leilao
+from src.leilao.exceptions import LanceInvalidoError
 
-class TestLeilao(TestCase):
-    def setUp(self) -> None:
-        # Usuários
-        self.gui = Usuario('Gui')
-        self.yuri = Usuario('Yuri')
-        self.felipe = Usuario('Felipe')
 
-        self.lance = Lance(self.felipe, 400.0)
+class TestLeilao:
 
-        self.lances = [
-            Lance(self.yuri, 45.0),
-            Lance(self.gui, 48.0),
-            Lance(self.yuri, 50.0),
-            Lance(self.gui, 60.0),
-            Lance(self.felipe, 250.0),
-            Lance(self.gui, 300.0)
+    @pytest.fixture
+    def gui(self):
+        return Usuario('Gui')
+
+    @pytest.fixture
+    def yuri(self):
+        return Usuario('Yuri')
+
+    @pytest.fixture
+    def felipe(self):
+        return Usuario('Felipe')
+
+    @pytest.fixture
+    def lance(self, felipe):
+        return Lance(felipe, 400.0)
+
+    @pytest.fixture
+    def lances(self, yuri, gui, felipe):
+        return [
+            Lance(yuri, 45.0),
+            Lance(gui, 48.0),
+            Lance(yuri, 50.0),
+            Lance(gui, 60.0),
+            Lance(felipe, 250.0),
+            Lance(gui, 300.0)
         ]
-        self.leilao = Leilao("Celular")
 
-    def test_deve_retornar_o_menor_lance(self):
-        self.leilao.propoe_lances(self.lances)
-        menor_lance = self.leilao.menor_lance
-        self.assertEqual(menor_lance, self.lances[0])
+    @pytest.fixture
+    def menor_lance(self, yuri):
+        return Lance(yuri, 45.0)
 
-    def test_deve_retornar_o_maior_lance(self):
-        self.leilao.propoe_lances(self.lances)
-        maior_lance = self.leilao.maior_lance
-        self.assertEqual(self.lances[len(self.lances) -1], maior_lance)
+    @pytest.fixture
+    def maior_lance(self, gui):
+        return Lance(gui, 300.0)
 
-    def test_deve_retornar_o_mesmo_valor_para_o_menor_e_o_maior_lance_quando_o_leilao_tiver_um_lance(self):
-        self.leilao.propoe(self.lance)
-        menor_lance = self.leilao.menor_lance
-        maior_lance = self.leilao.maior_lance
-        self.assertEqual(menor_lance, maior_lance)
+    @pytest.fixture
+    def leilao(self):
+        return Leilao("Celular")
 
-    def test_deve_retornar_o_numero_de_lances_dados_no_leilao(self):
-        for lance in self.lances:
-            self.leilao.propoe(lance)
+    def test_deve_retornar_o_menor_lance(self, leilao, lances, menor_lance):
+        leilao.propoe_lances(lances)
 
-        numero_de_lances = len(self.leilao)
-        self.assertEqual(numero_de_lances, len(self.lances))
+        assert menor_lance == leilao.menor_lance
 
-    def test_nao_deve_permitir_propor_um_lance_se_o_lance_dado_for_menor_que_os_lances_que_ja_ocorreram(self):
-        self.leilao.propoe_lances(self.lances)
-        lance = Lance(self.felipe, 3.0)
-        self.assertRaises(ValueError, self.leilao.propoe, lance)
+    def test_deve_retornar_o_maior_lance(self, leilao, lances, maior_lance):
+        leilao.propoe_lances(lances)
+
+        assert maior_lance == leilao.maior_lance
+
+    def test_deve_retornar_o_mesmo_valor_para_o_menor_e_o_maior_lance_quando_o_leilao_tiver_um_lance(self,
+                                                                                                     leilao,
+                                                                                                     lance):
+        leilao.propoe(lance)
+        menor_lance = leilao.menor_lance
+        maior_lance = leilao.maior_lance
+        assert menor_lance == maior_lance
+
+    def test_deve_retornar_o_numero_de_lances_dados_no_leilao(self, leilao, lances):
+        for lance in lances:
+            leilao.propoe(lance)
+
+        numero_de_lances = len(leilao)
+        assert numero_de_lances == len(lances)
+
+    def test_nao_deve_permitir_propor_um_lance_se_o_lance_dado_for_menor_que_os_lances_que_ja_ocorreram(self,
+                                                                                                        leilao,
+                                                                                                        lances,
+                                                                                                        felipe):
+        leilao.propoe_lances(lances)
+        lance = Lance(felipe, 3.0)
+
+        with(pytest.raises(LanceInvalidoError)):
+            leilao.propoe(lance)
 
     # se o leilão não tiver lances, deve permitir propor um lance
-    def test_deve_permitir_propor_um_lance_caso_o_leilao_nao_tenha_lances(self):
-        self.assertEqual(len(self.leilao), 0)
-        self.leilao.propoe(self.lance)
-        self.assertEqual(len(self.leilao), 1)
+    def test_deve_permitir_propor_um_lance_caso_o_leilao_nao_tenha_lances(self, leilao, lance):
+        assert len(leilao) == 0
+
+        leilao.propoe(lance)
+
+        assert len(leilao) == 1
 
     # se o último usuário for diferente, ele deve permitir propor um lance
-    def test_deve_permitir_propor_um_lance_se_o_ultimo_usuario_for_diferente(self):
-        self.leilao.propoe_lances(self.lances)
-        ultimo_lance = self.leilao.ultimo_lance
-        self.assertNotEqual(self.felipe, ultimo_lance.usuario)
+    def test_deve_permitir_propor_um_lance_se_o_ultimo_usuario_for_diferente(self, leilao, lances, felipe):
+        leilao.propoe_lances(lances)
+        ultimo_lance = leilao.ultimo_lance
+        assert felipe != ultimo_lance.usuario
 
-        lance = Lance(self.felipe, 350.0)
-        self.leilao.propoe(lance)
-        self.assertEqual(self.leilao.ultimo_lance, lance)
+        lance = Lance(felipe, 350.0)
+        leilao.propoe(lance)
+        assert leilao.ultimo_lance == lance
 
     # se o último usuário for o mesmo, ele não deve permitir propor um lance
-    def test_nao_deve_permitir_propor_um_lance_se_o_ultimo_usuario_for_o_mesmo_usuario(self):
-        self.leilao.propoe_lances(self.lances)
-        ultimo_lance = self.leilao.ultimo_lance
-        self.assertEqual(ultimo_lance.usuario, self.gui)
+    def test_nao_deve_permitir_propor_um_lance_se_o_ultimo_usuario_for_o_mesmo_usuario(self, leilao, lances, gui):
+        leilao.propoe_lances(lances)
+        ultimo_lance = leilao.ultimo_lance
+        assert ultimo_lance.usuario == gui
 
-        lance = Lance(self.gui, 350.0)
-        with self.assertRaises(ValueError):
-            self.leilao.propoe(lance)
+        lance = Lance(gui, 350.0)
+        with pytest.raises(LanceInvalidoError):
+            leilao.propoe(lance)
 
+    def test_deve_criar_o_leilao_no_estado_aberto(self, leilao):
+        assert leilao.aberto == True
 
-    def test_deve_retornar_o_vencedor_do_leilao(self):
-        self.leilao.propoe_lances(self.lances)
-        vencedor = self.leilao.vencedor
+    def test_deve_fechar_o_leilao_apos_o_encerramento(self, leilao, lances):
+        leilao.propoe_lances(lances)
+        leilao.encerra()
 
-        self.assertEqual(vencedor, self.gui)
+        assert leilao.aberto == False
 
-    def test_deve_retornar_none_se_o_leilao_nao_tiver_lances(self):
-        vencedor = self.leilao.vencedor
-        self.assertIsNone(vencedor)
+    def test_deve_retornar_none_se_o_leilao_nao_tiver_lances(self, leilao):
+        vencedor = leilao.vencedor
+        assert vencedor == None
+
+    def test_deve_retornar_none_se_o_leilao_nao_tiver_sido_encerrado(self, leilao, lances):
+        leilao.propoe_lances(lances)
+        vencedor = leilao.vencedor
+        assert vencedor == None
+
+    def test_deve_retornar_o_vencedor_do_leilao_apos_o_encerramento(self, leilao, lances, gui):
+        leilao.propoe_lances(lances)
+        leilao.encerra()
+        vencedor = leilao.vencedor
+
+        assert vencedor == gui
+

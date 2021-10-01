@@ -1,6 +1,8 @@
 import sys
 from functools import total_ordering
 
+from src.leilao.exceptions import LanceInvalidoError, SaldoInsuficienteError
+
 
 class Usuario:
 
@@ -27,7 +29,7 @@ class Usuario:
 
     def debita_carteira(self, valor):
         if valor > self.__carteira:
-            raise ValueError(f"Não é possível debitar o valor R$ {valor:.2f} da " +
+            raise SaldoInsuficienteError(f"Não é possível debitar o valor R$ {valor:.2f} da " +
                              f"carteira do usuário {self.nome}. Saldo insuficiente.")
         self.__carteira -= valor
 
@@ -75,6 +77,7 @@ class Leilao:
         self.__descricao = descricao
         self.__valor_maior_lance = sys.float_info.min
         self.__valor_menor_lance = sys.float_info.max
+        self.__aberto = True
 
         self.__lances = []
         if(lances):
@@ -113,8 +116,12 @@ class Leilao:
         return self.ultimo_lance
 
     @property
+    def aberto(self):
+        return self.__aberto
+
+    @property
     def vencedor(self):
-        if self.lances:
+        if self.lances and not self.aberto:
             return self.maior_lance.usuario
         else:
             return None
@@ -124,16 +131,16 @@ class Leilao:
         ultimo_lance = self.ultimo_lance
 
         if not usuario.pode_dar_lance(lance):
-            raise ValueError(f"O usuário {usuario} não pode propor o lance " +
+            raise LanceInvalidoError(f"O usuário {usuario} não pode propor o lance " +
                              f"R$ {lance.valor:.2f}. Saldo insuficiente.")
 
         if self.tem_lances():
 
             if(lance.ultimo_lance_tem_mesmo_usuario(ultimo_lance)):
-                raise ValueError(f"O usuário {usuario} não pode propor dois lances seguidos.")
+                raise LanceInvalidoError(f"O usuário {usuario} não pode propor dois lances seguidos.")
 
             if(lance <= self.maior_lance):
-                raise ValueError("Para um lance ser aceito, ele deve ser maior que os lances anteriores")
+                raise LanceInvalidoError("Para um lance ser aceito, ele deve ser maior que os lances anteriores")
 
         self.__lances.append(lance)
 
@@ -149,3 +156,4 @@ class Leilao:
         lance_vencedor = self.maior_lance
         usuario = lance_vencedor.usuario
         usuario.debita_carteira(lance_vencedor.valor)
+        self.__aberto = False
