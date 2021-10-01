@@ -51,7 +51,7 @@ class Leilao:
         self.__lances = []
         if(lances):
             for lance in lances:
-                self.dar_lance(lance)
+                self.propoe(lance)
 
     def __len__(self):
         return len(self.lances)
@@ -72,7 +72,7 @@ class Leilao:
     def maior_lance(self):
         return max(self.lances, key=attrgetter('valor'))
 
-    def dar_lance(self, lance: Lance):
+    def propoe(self, lance: Lance):
 
         if len(self.lances) > 0:
             maior_lance = max(self.lances, key=attrgetter('valor'))
@@ -82,6 +82,6 @@ class Leilao:
 
         self.__lances.append(lance)
 
-    def dar_lances(self, lances):
+    def propoe_lances(self, lances):
         for lance in lances:
-            self.dar_lance(lance)
+            self.propoe(lance)
