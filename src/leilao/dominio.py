@@ -64,6 +64,14 @@ class Leilao:
     def descricao(self):
         return self.__descricao
 
+    @property
+    def menor_lance(self):
+        return min(self.lances, key=attrgetter('valor'))
+
+    @property
+    def maior_lance(self):
+        return max(self.lances, key=attrgetter('valor'))
+
     def dar_lance(self, lance: Lance):
 
         if len(self.lances) > 0:
@@ -77,17 +85,3 @@ class Leilao:
     def dar_lances(self, lances):
         for lance in lances:
             self.dar_lance(lance)
-
-
-class Avaliador:
-
-    def __init__(self, leilao: Leilao):
-        self.__leilao = leilao
-
-    @property
-    def menor_lance(self):
-        return min(self.__leilao.lances, key=attrgetter('valor'))
-
-    @property
-    def maior_lance(self):
-        return max(self.__leilao.lances, key=attrgetter('valor'))
