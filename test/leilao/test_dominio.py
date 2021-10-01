@@ -2,7 +2,7 @@ from unittest import TestCase
 
 from src.leilao.dominio import Usuario, Lance, Leilao
 
-class TestBase(TestCase):
+class TestLeilao(TestCase):
     def setUp(self) -> None:
         # Usuários
         self.gui = Usuario('Gui')
@@ -21,8 +21,6 @@ class TestBase(TestCase):
         ]
         self.leilao = Leilao("Celular")
 
-
-class TestLeilao(TestBase):
     def test_deve_retornar_o_menor_lance(self):
         self.leilao.propoe_lances(self.lances)
         menor_lance = self.leilao.menor_lance
@@ -46,7 +44,44 @@ class TestLeilao(TestBase):
         numero_de_lances = len(self.leilao)
         self.assertEqual(numero_de_lances, len(self.lances))
 
-    def test_deve_retornar_excecao_se_o_lance_dado_for_menor_que_os_que_ja_ocorreram(self):
+    def test_nao_deve_permitir_propor_um_lance_se_o_lance_dado_for_menor_que_os_lances_que_ja_ocorreram(self):
         self.leilao.propoe_lances(self.lances)
-        lance = Lance(self.gui, 3.0)
+        lance = Lance(self.felipe, 3.0)
         self.assertRaises(ValueError, self.leilao.propoe, lance)
+
+    # se o leilão não tiver lances, deve permitir propor um lance
+    def test_deve_permitir_propor_um_lance_caso_o_leilao_nao_tenha_lances(self):
+        self.assertEqual(len(self.leilao), 0)
+        self.leilao.propoe(self.lance)
+        self.assertEqual(len(self.leilao), 1)
+
+    # se o último usuário for diferente, ele deve permitir propor um lance
+    def test_deve_permitir_propor_um_lance_se_o_ultimo_usuario_for_diferente(self):
+        self.leilao.propoe_lances(self.lances)
+        ultimo_lance = self.leilao.ultimo_lance
+        self.assertNotEqual(self.felipe, ultimo_lance.usuario)
+
+        lance = Lance(self.felipe, 350.0)
+        self.leilao.propoe(lance)
+        self.assertEqual(self.leilao.ultimo_lance, lance)
+
+    # se o último usuário for o mesmo, ele não deve permitir propor um lance
+    def test_nao_deve_permitir_propor_um_lance_se_o_ultimo_usuario_for_o_mesmo_usuario(self):
+        self.leilao.propoe_lances(self.lances)
+        ultimo_lance = self.leilao.ultimo_lance
+        self.assertEqual(ultimo_lance.usuario, self.gui)
+
+        lance = Lance(self.gui, 350.0)
+        with self.assertRaises(ValueError):
+            self.leilao.propoe(lance)
+
+
+    def test_deve_retornar_o_vencedor_do_leilao(self):
+        self.leilao.propoe_lances(self.lances)
+        vencedor = self.leilao.vencedor
+
+        self.assertEqual(vencedor, self.gui)
+
+    def test_deve_retornar_none_se_o_leilao_nao_tiver_lances(self):
+        vencedor = self.leilao.vencedor
+        self.assertIsNone(vencedor)
